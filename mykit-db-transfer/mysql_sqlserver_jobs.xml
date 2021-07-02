@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <code>4500000001</code>
+    <source>
+        <url>jdbc:mysql://localhost:3306/test_transfer?useUnicode=true&amp;characterEncoding=UTF-8&amp;useOldAliasMetadataBehavior=true</url>
+        <username>root</username>
+        <password>root</password>
+        <dbtype>mysql</dbtype>
+        <driver>com.mysql.jdbc.Driver</driver>
+    </source>
+    <dest>
+        <url>jdbc:sqlserver://localhost:1433;DatabaseName=test2</url>
+        <username>sa</username>
+        <password>root</password>
+        <dbtype>sqlserver</dbtype>
+        <driver>com.microsoft.sqlserver.jdbc.SQLServerDriver</driver>
+    </dest>
+    <jobs>
+        <job>
+            <name>1</name>
+            <cron>0 0/5 * * * ?</cron>
+            <srcSql>select id, username, name, create_time from user</srcSql>
+            <srcTableFields>id, username, name, create_time</srcTableFields>
+
+            <destTable>guest.t_user2</destTable>
+            <destTableFields>id, user_name, real_name, create_time</destTableFields>
+            <destTableKey>id</destTableKey>
+            <!--重新修改过，需添加id 占位循环从1开始-->
+            <destTableUpdate>id, user_name, real_name, create_time</destTableUpdate>
+        </job>
+    </jobs>
+</root>
