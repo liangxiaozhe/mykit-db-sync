@@ -12,7 +12,7 @@
     <artifactId>mykit-db-oracle</artifactId>
 
     <properties>
-        <oracle.jdbc.version>12.1.0</oracle.jdbc.version>
+        <oracle.jdbc.version>11.2.0.3</oracle.jdbc.version>
     </properties>
 
     <dependencies>
