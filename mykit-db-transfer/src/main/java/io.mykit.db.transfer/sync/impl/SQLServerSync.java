@@ -15,12 +15,15 @@
  */
 package io.mykit.db.transfer.sync.impl;
 
+import io.mykit.db.common.constants.MykitDbSyncConstants;
+import io.mykit.db.common.utils.StringUtils;
 import io.mykit.db.transfer.entity.JobInfo;
 import io.mykit.db.transfer.sync.DBSync;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.*;
+import java.util.Map;
 
 /**
  * @author binghe
@@ -33,8 +36,17 @@ public class SQLServerSync extends AbstractDBSync implements DBSync {
     @Override
     public String assembleSQL(String srcSql, Connection conn, JobInfo jobInfo) throws SQLException {
         String fieldStr = jobInfo.getDestTableFields();
-        String[] fields = jobInfo.getDestTableFields().split(",");
-        fields = this.trimArrayItem(fields);
+        String[] destFields = jobInfo.getDestTableFields().split(",");
+        destFields = this.trimArrayItem(destFields);
+
+        //默认的srcFields数组与destFields相同
+        String[] srcFields = destFields;
+        String srcField = jobInfo.getSrcTableFields();
+        if(!StringUtils.isEmpty(srcField)){
+            srcFields = this.trimArrayItem(srcField.split(MykitDbSyncConstants.FIELD_SPLIT));
+        }
+        Map<String, String> fieldMapper = this.getFieldsMapper(srcFields, destFields);
+
         String[] updateFields = jobInfo.getDestTableUpdate().split(",");
         updateFields = this.trimArrayItem(updateFields);
         String destTableKey = jobInfo.getDestTableKey();
@@ -46,12 +58,12 @@ public class SQLServerSync extends AbstractDBSync implements DBSync {
         while (rs.next()) {
             sql.append("if not exists (select ").append(destTableKey).append(" from ").append(destTable).append(" where ").append(destTableKey).append("='").append(rs.getString(destTableKey))
                     .append("')").append("insert into ").append(destTable).append("(").append(fieldStr).append(") values(");
-            for (int index = 0; index < fields.length; index++) {
-                sql.append("'").append(rs.getString(fields[index])).append(index == (fields.length - 1) ? "'" : "',");
+            for (int index = 0; index < destFields.length; index++) {
+                sql.append("'").append(rs.getString(fieldMapper.get(destFields[index]).trim())).append(index == (destFields.length - 1) ? "'" : "',");
             }
             sql.append(") else update ").append(destTable).append(" set ");
-            for (int index = 0; index < updateFields.length; index++) {
-                sql.append(updateFields[index]).append("='").append(rs.getString(updateFields[index])).append(index == (updateFields.length - 1) ? "'" : "',");
+            for (int index = 1; index < updateFields.length; index++) {
+                sql.append(updateFields[index]).append("='").append(rs.getString(fieldMapper.get(destFields[index]).trim())).append(index == (updateFields.length - 1) ? "'" : "',");
             }
             sql.append(" where ").append(destTableKey).append("='").append(rs.getString(destTableKey)).append("';");
             count++;
